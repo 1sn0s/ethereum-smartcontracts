@@ -6,16 +6,16 @@ contract crowdFund{
 	uint public goal;
 	uint public deadline;
 	uint public fundAchieved;
-	mapping(address=>uint) contribution;
+	mapping(address=>uint) private contribution;
 
-	enum FundStatus {stopped, inProgress, goalAchieved, goalNotAchieved, refundInProgress, Completed}
+	enum FundStatus {Fund, End, Goal, Refund, Done}
 	FundStatus _fundStatus;
 
 	function crowdFund(address _beneficiary, uint _goal, uint _deadline){
 		beneficiary = _beneficiary;
 		goal 		= _goal;
 		deadline 	= _deadline;
-		_fundStatus = FundStatus.inProgress;
+		_fundStatus = FundStatus.Fund;
 		_owner		= msg.sender;
 	}
 
@@ -25,35 +25,43 @@ contract crowdFund{
 	}
 
 	modifier acceptFund(FundStatus _status, uint _now){
-		require(_status == FundStatus.inProgress && _now <= deadline);
+		require(_status == FundStatus.Fund && _now <= deadline);
 		_;
 	}
 
-	modifier isOwner(_address){
-		require(_owner == _address);
-		_;
-	}
-
-	function contribute() public payable acceptFund(FundStatus.inProgress, now){
+	function contribute() public payable acceptFund(FundStatus.Fund, now){
 		//TODO: Check if value exceeds. Then refund rest.
 		contribution[msg.sender] += msg.value;
 		fundAchieved += msg.value;
-		if(fundAchieved >= goal){
-			_fundStatus = FundStatus.goalAchieved;
-		}
 	}
 
 	//Close the fund.
-	function closeFund() public returns(uint fundStatus){
-		if(_isOwner(msg.sender)){
-			_fundStatus = FundStatus.stopped;
+	function endFunding() public returns(uint fundStatus){
+		require(_owner == msg.sender);
+		_fundStatus = FundStatus.End;
+		if(_isGoalAchieved()){
+			_fundStatus = FundStatus.Goal;
 		}
-		if(fundAchieved >= goal){
-			_fundStatus = FundStatus.goalAchieved;
-		} else {
-			_fundStatus = FundStatus.goalNotAchieved;
-		}
+
 		returns _fundStatus;
+	}
+
+	function startRefund() public fundStatus(FundStatus.End) {
+		require(_owner == msg.sender);
+		_fundStatus = FundStatus.Refund;
+	}
+
+	function refund() public fundStatus(FundStatus.refundInProgress) {
+		require(contribution[msg.sender] > 0);
+		uint _contribution = contribution[msg.sender];
+		contribution[msg.sender] = 0;
+		msg.sender.transfer(_contribution);
+	}
+
+	function transferBeneficiary() public fundStatus(FundStatus.Goal) {
+		require(_owner == msg.sender;
+		_fundStatus = FundStatus.Done;
+		_beneficiary.transfer(this.balance);
 	}
 
 	function _isOwner(address _address) private returns(bool isOwner){
@@ -62,8 +70,12 @@ contract crowdFund{
 
 	//Checking if the dealine has passed.
 	//TODO: Check if this condition is safe/secure
-	function _isPastDeadLine() private returns(bool isPastDealine){
+	function _hasEnded() private returns(bool isPastDealine){
 		return now >= deadline;
+	}
+
+	function _isGoalAchieved() private returns(bool isGoalAchieved){
+		return fundAchieved >= goal;
 	}
 
 
