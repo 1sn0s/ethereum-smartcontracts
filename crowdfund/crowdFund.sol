@@ -11,7 +11,7 @@ contract crowdFund{
 	enum FundStatus {Fund, End, Goal, Refund, Done}
 	FundStatus _fundStatus;
 
-	function crowdFund(address _beneficiary, uint _goal, uint _deadline){
+	function crowdFund(address _beneficiary, uint _goal, uint _deadline) public{
 		beneficiary = _beneficiary;
 		goal 		= _goal;
 		deadline 	= _deadline;
@@ -36,14 +36,14 @@ contract crowdFund{
 	}
 
 	//Close the fund.
-	function endFunding() public returns(uint fundStatus){
+	function endFunding() public returns(uint status){
 		require(_owner == msg.sender);
 		_fundStatus = FundStatus.End;
 		if(_isGoalAchieved()){
 			_fundStatus = FundStatus.Goal;
 		}
 
-		returns _fundStatus;
+		return uint(_fundStatus);
 	}
 
 	function startRefund() public fundStatus(FundStatus.End) {
@@ -51,7 +51,7 @@ contract crowdFund{
 		_fundStatus = FundStatus.Refund;
 	}
 
-	function refund() public fundStatus(FundStatus.refundInProgress) {
+	function refund() public fundStatus(FundStatus.Refund) {
 		require(contribution[msg.sender] > 0);
 		uint _contribution = contribution[msg.sender];
 		contribution[msg.sender] = 0;
@@ -59,24 +59,23 @@ contract crowdFund{
 	}
 
 	function transferBeneficiary() public fundStatus(FundStatus.Goal) {
-		require(_owner == msg.sender;
+		require(_owner == msg.sender);
 		_fundStatus = FundStatus.Done;
-		_beneficiary.transfer(this.balance);
+		beneficiary.transfer(this.balance);
 	}
 
-	function _isOwner(address _address) private returns(bool isOwner){
+	function _isOwner(address _address) private view returns(bool isOwner){
 		return (_address == _owner);
 	}
 
 	//Checking if the dealine has passed.
 	//TODO: Check if this condition is safe/secure
-	function _hasEnded() private returns(bool isPastDealine){
+	function _hasEnded() private view returns(bool isPastDealine){
 		return now >= deadline;
 	}
 
-	function _isGoalAchieved() private returns(bool isGoalAchieved){
+	function _isGoalAchieved() private view  returns(bool isGoalAchieved){
 		return fundAchieved >= goal;
 	}
-
 
 }
