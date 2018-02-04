@@ -102,14 +102,11 @@ module.exports = {
 		//console.log("compiled", compiled);
 		var compiledContract	= compiled.contracts[":crowdFund"];
 		var abi 				= JSON.parse(compiledContract.interface);
-		var crowdFund	 		= new web3.eth.Contract(abi, '', {
-			from: web3.eth.defaultAccount
-		});
+		var crowdFund	 		= new web3.eth.Contract(abi);
 		//console.log("crowdFund", crowdFund);
 		console.log("beneficiary", beneficiary);
 		crowdFund.options = {
 			jsonInterface: abi,
-			from : web3.eth.defaultAccount,
 			data : '0x' + compiledContract.bytecode,
 			gas : 4700000,
 			gasPrice : 10,
