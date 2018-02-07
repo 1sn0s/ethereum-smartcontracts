@@ -7,6 +7,8 @@
 		enum GameState { betOpen, betWaiting, betClosed}
 		GameState public coinFlip;
 
+		event GameResult(address winner, uint winnings);		
+
 		function coinFlipper() public{
 			coinFlip = GameState.betOpen;
 		}
@@ -34,11 +36,14 @@
 
 		function flipCoin() public 
 		gameOn(GameState.betClosed){
+			address winner;
+			uint winnings = this.balance;
 			if(((variables[0] * block.number) + (variables[1] * block.timestamp))% 2 == 0){
 				parties[0].send(this.balance);
 			} else {
 				parties[1].send(this.balance);
 			}
+			GameResult(winner, winnings);
 			coinFlip = GameState.betOpen;
 		}
 	}

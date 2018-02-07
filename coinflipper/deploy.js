@@ -1,5 +1,5 @@
 var Web3 = require("Web3");
-var web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+var web3 = new Web3(new Web3.providers.WebsocketProvider("ws://localhost:8545"));
 web3.eth.getAccounts().then((accounts)=>{
 	web3.eth.defaultAccount = accounts[0];
 	console.log("Default Account", web3.eth.defaultAccount);
@@ -7,47 +7,68 @@ web3.eth.getAccounts().then((accounts)=>{
 	module.exports.web3   = web3;
 	module.exports.party1 = accounts[1];
 	module.exports.party2 = accounts[2];
-})
+});
+
+
 
 var solc = require("solc");
-var src = `pragma solidity ^0.4.19;
-contract coinFlipper{
-	mapping(uint=>address) parties;
-	uint bet;
-	uint[] private variables = new uint[](2);
+var src = `	pragma solidity ^0.4.19;
+	contract coinFlipper{
+		mapping(uint=>address) parties;
+		uint bet;
+		uint[] private variables = new uint[](2);
 
-	enum GameState { betOpen, betWaiting, betClosed}
-	GameState public coinFlip;
+		enum GameState { betOpen, betWaiting, betClosed}
+		GameState public coinFlip;
 
-	function coinFlipper() public{
-		coinFlip = GameState.betOpen;
-	}
+		event GameResult(address winner, uint winnings);		
 
-	function offerBet(uint _rand) public payable {
-		require(coinFlip == GameState.betOpen);
-		bet = msg.value;
-		coinFlip = GameState.betWaiting;
-		parties[0] = msg.sender;
-		variables[0] = _rand;
-	}
-
-	function meetBet(uint _rand) public payable {
-		require(coinFlip == GameState.betWaiting);
-		require(msg.value >= bet);
-		coinFlip = GameState.betClosed;
-		parties[1] = msg.sender;
-		variables[1] = _rand;
-	}
-
-	function flipCoin() public{
-		if(((variables[0] * block.number) + (variables[1] * block.timestamp))% 2 == 0){
-			parties[0].send(this.balance);
-		} else {
-			parties[1].send(this.balance);
+		function coinFlipper() public{
+			coinFlip = GameState.betOpen;
 		}
-		coinFlip = GameState.betOpen;
-	}
-}`;
+
+		modifier gameOn(GameState _state){
+			require(coinFlip == _state);
+			_;
+		}
+
+		function offerBet(uint _rand) public payable 
+		gameOn(GameState.betOpen) {		
+			bet = msg.value;
+			coinFlip = GameState.betWaiting;
+			parties[0] = msg.sender;
+			variables[0] = _rand;
+		}
+
+		function meetBet(uint _rand) public payable 
+		gameOn(GameState.betWaiting){
+			require(msg.value >= bet);
+			coinFlip = GameState.betClosed;
+			parties[1] = msg.sender;
+			variables[1] = _rand;
+		}
+
+		function flipCoin() public 
+		gameOn(GameState.betClosed){
+			address winner;
+			uint winnings = this.balance;
+			if(((variables[0] * block.number) + (variables[1] * block.timestamp))% 2 == 0){
+				parties[0].send(this.balance);
+			} else {
+				parties[1].send(this.balance);
+			}
+			GameResult(winner, winnings);
+			coinFlip = GameState.betOpen;
+		}
+	}`;
+
+var recordResult = function(){
+	//Record this off-chain
+}
+
+var getResult = function(){
+	//Get result from off-chain
+}
 
 //Helper functions to play around in the console
 //Saves a lot of time. Don't want to add any framework
@@ -78,6 +99,12 @@ module.exports = {
 	//Not sure why, but you have to set provider for a contract separately.
 	//TODO : Check why
 	setProvider : (contract) => {contract.setProvider(web3.currentProvider);},
+
+	startEventListener : (contract) => {
+		contract.events.GameResult({}, function(error, event){
+			
+		})
+	}
 
 	//Calls the contract offerBet function
 	offerBet : function(contract, party, amount, rand){
