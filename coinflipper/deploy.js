@@ -1,5 +1,8 @@
 var Web3 = require("Web3");
 var web3 = new Web3(new Web3.providers.WebsocketProvider("ws://localhost:8545"));
+var IPFS = require('ipfs-mini');
+const ipfs = new IPFS({host: "ipfs.infura.io", port:5001, protocol:"https"});
+
 web3.eth.getAccounts().then((accounts)=>{
 	web3.eth.defaultAccount = accounts[0];
 	console.log("Default Account", web3.eth.defaultAccount);
@@ -9,7 +12,7 @@ web3.eth.getAccounts().then((accounts)=>{
 	module.exports.party2 = accounts[2];
 });
 
-
+ipfs.add("helloworld", (err, result)=>console.log("result", result));
 
 var solc = require("solc");
 var src = `	pragma solidity ^0.4.19;
@@ -104,7 +107,7 @@ module.exports = {
 		contract.events.GameResult({}, function(error, event){
 			
 		})
-	}
+	},
 
 	//Calls the contract offerBet function
 	offerBet : function(contract, party, amount, rand){

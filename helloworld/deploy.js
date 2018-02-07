@@ -19,11 +19,11 @@ function contractDeploy(){
 	//console.log("compiled", compiled);
 	var escontract 		= compiled.contracts[":helloworldContract"];
 	var abi 			= JSON.parse(escontract.interface);
-	var firstContract 	= new web3.eth.Contract(abi);
+	var firstContract 	= new web3.eth.Contract(abi, "0x3f1685d74930d9da5769222a24630718bf93b03c");
 
 	firstContract.options = {
 		jsonInterface: abi,
-		from : web3.eth.defaultAccount,
+		//from : web3.eth.defaultAccount,
 		data : '0x' + escontract.bytecode,
 		gas : 4700000,
 		gasPrice : 10
@@ -36,7 +36,7 @@ function contractDeploy(){
 
 	firstContract.deploy(firstContract.options)
 	.send({
-		from: web3.eth.defaultAccount,
+		//from: web3.eth.defaultAccount,
 		gas: 4700000,
 		gasPrice : 10
 	})
