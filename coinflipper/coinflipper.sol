@@ -40,8 +40,10 @@
 			uint winnings = this.balance;
 			if(((variables[0] * block.number) + (variables[1] * block.timestamp))% 2 == 0){
 				parties[0].send(this.balance);
+				winner = parties[0];
 			} else {
 				parties[1].send(this.balance);
+				winner = parties[1];
 			}
 			GameResult(winner, winnings);
 			coinFlip = GameState.betOpen;

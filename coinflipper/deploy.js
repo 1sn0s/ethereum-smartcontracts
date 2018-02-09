@@ -12,7 +12,7 @@ web3.eth.getAccounts().then((accounts)=>{
 	module.exports.party2 = accounts[2];
 });
 
-ipfs.add("helloworld", (err, result)=>console.log("result", result));
+//ipfs.add("helloworld", (err, result)=>console.log("result", result));
 
 var solc = require("solc");
 var src = `	pragma solidity ^0.4.19;
@@ -57,21 +57,16 @@ var src = `	pragma solidity ^0.4.19;
 			uint winnings = this.balance;
 			if(((variables[0] * block.number) + (variables[1] * block.timestamp))% 2 == 0){
 				parties[0].send(this.balance);
+				winner = parties[0];
 			} else {
 				parties[1].send(this.balance);
+				winner = parties[1];
 			}
 			GameResult(winner, winnings);
 			coinFlip = GameState.betOpen;
 		}
 	}`;
-
-var recordResult = function(){
-	//Record this off-chain
-}
-
-var getResult = function(){
-	//Get result from off-chain
-}
+var resultHash;
 
 //Helper functions to play around in the console
 //Saves a lot of time. Don't want to add any framework
@@ -105,8 +100,15 @@ module.exports = {
 
 	startEventListener : (contract) => {
 		contract.events.GameResult({}, function(error, event){
-			
+			if(err) console.log;
 		})
+		.on('data', function(event){
+			console.log("event data", event);
+			ipfs.addJSON(event, (err, result)=>{
+				console.log("ipfs write result", result);
+				resultHash = result;
+			});
+		});
 	},
 
 	//Calls the contract offerBet function
@@ -125,5 +127,11 @@ module.exports = {
 	flipCoin: function(contract){
 		contract.methods.flipCoin().send({from:web3.eth.defaultAccount})
 		.then(console.log);
+	},
+
+	checkResult: function(){
+		ipfs.catJSON(resultHash, (err, result)=>{
+			console.log("ipfs read result", result);
+		})
 	}
 }
