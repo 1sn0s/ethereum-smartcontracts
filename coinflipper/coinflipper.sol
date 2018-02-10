@@ -47,11 +47,12 @@
 				winner = parties[1];
 			}
 			GameResult(winner, winnings);
+			coinFlip = GameState.betOpen;
 		}
 
 		function setResult(string storageHash) public
 		gameOn(GameState.betClosed){
+			require(winner == msg.sender);
 			latestResultHash = storageHash;
-			coinFlip = GameState.betOpen;
 		}
 	}

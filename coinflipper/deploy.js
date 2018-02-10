@@ -68,6 +68,7 @@ var src = `	pragma solidity ^0.4.19;
 
 		function setResult(string storageHash) public
 		gameOn(GameState.betClosed){
+			require(winner == msg.sender);
 			latestResultHash = storageHash;
 			coinFlip = GameState.betOpen;
 		}
@@ -114,17 +115,17 @@ module.exports = {
 	setProvider : (contract) => {contract.setProvider(web3.currentProvider);},
 
 	startEventListener : (contract) => {
-		contract.events.GameResult({}, function(error, event){
+		contract.events.GameResult({}, function(err, event){
 			if(err) console.log;
 		})
 		.on('data', function(event){
 			console.log("event data", event);
 			if(event.returnValues){
 				let result = getResult(event);
-				ipfs.addJSON(result, (err, result)=>{
+				ipfs.add(result, (err, result)=>{
 					//console.log("ipfs write result", result);
 					//resultHash = result;
-					contract.methods.setResult(result).send({from:web3.eth.defaultAccount});
+					contract.methods.setResult(result).send({from:event.returnValues["winner"]});
 				});
 			}
 		});
@@ -151,7 +152,7 @@ module.exports = {
 	checkResult: function(contract){
 		contract.methods.latestResultHash().send({from:web3.eth.defaultAccount})
 		.then(resultHash=>{
-			ipfs.catJSON(resultHash, (err, result)=>{
+			ipfs.cat(resultHash, (err, result)=>{
 				console.log("Result", result);
 			});
 		});
