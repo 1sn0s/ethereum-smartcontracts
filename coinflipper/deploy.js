@@ -19,10 +19,12 @@ var src = `	pragma solidity ^0.4.19;
 	contract coinFlipper{
 		mapping(uint=>address) parties;
 		uint bet;
+		string public latestResultHash;
 		uint[] private variables = new uint[](2);
+		address private winner;
 
 		enum GameState { betOpen, betWaiting, betClosed}
-		GameState public coinFlip;
+		GameState private coinFlip;
 
 		event GameResult(address winner, uint winnings);		
 
@@ -52,8 +54,7 @@ var src = `	pragma solidity ^0.4.19;
 		}
 
 		function flipCoin() public 
-		gameOn(GameState.betClosed){
-			address winner;
+		gameOn(GameState.betClosed){			
 			uint winnings = this.balance;
 			if(((variables[0] * block.number) + (variables[1] * block.timestamp))% 2 == 0){
 				parties[0].send(this.balance);
@@ -63,10 +64,24 @@ var src = `	pragma solidity ^0.4.19;
 				winner = parties[1];
 			}
 			GameResult(winner, winnings);
+		}
+
+		function setResult(string storageHash) public
+		gameOn(GameState.betClosed){
+			latestResultHash = storageHash;
 			coinFlip = GameState.betOpen;
 		}
 	}`;
-var resultHash;
+
+var getResult = function(eventData){
+	let txHash = eventData.transactionHash;
+	let winnerAddress = eventData.returnValues["winner"];
+	let winnings = eventData.returnValues["winnings"];
+	let result = "\ntxHash: " + txHash
+				+ "\n" + "Winner: " + winnerAddress
+				+ "\n" + "Winnings: " + winnings;
+	return result;
+}
 
 //Helper functions to play around in the console
 //Saves a lot of time. Don't want to add any framework
@@ -104,10 +119,14 @@ module.exports = {
 		})
 		.on('data', function(event){
 			console.log("event data", event);
-			ipfs.addJSON(event, (err, result)=>{
-				console.log("ipfs write result", result);
-				resultHash = result;
-			});
+			if(event.returnValues){
+				let result = getResult(event);
+				ipfs.addJSON(result, (err, result)=>{
+					//console.log("ipfs write result", result);
+					//resultHash = result;
+					contract.methods.setResult(result).send({from:web3.eth.defaultAccount});
+				});
+			}
 		});
 	},
 
@@ -129,9 +148,12 @@ module.exports = {
 		.then(console.log);
 	},
 
-	checkResult: function(){
-		ipfs.catJSON(resultHash, (err, result)=>{
-			console.log("ipfs read result", result);
-		})
+	checkResult: function(contract){
+		contract.methods.latestResultHash().send({from:web3.eth.defaultAccount})
+		.then(resultHash=>{
+			ipfs.catJSON(resultHash, (err, result)=>{
+				console.log("Result", result);
+			});
+		});
 	}
 }

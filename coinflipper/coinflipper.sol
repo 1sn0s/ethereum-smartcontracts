@@ -2,10 +2,12 @@
 	contract coinFlipper{
 		mapping(uint=>address) parties;
 		uint bet;
+		string public latestResultHash;
 		uint[] private variables = new uint[](2);
+		address private winner;
 
 		enum GameState { betOpen, betWaiting, betClosed}
-		GameState public coinFlip;
+		GameState private coinFlip;
 
 		event GameResult(address winner, uint winnings);		
 
@@ -35,8 +37,7 @@
 		}
 
 		function flipCoin() public 
-		gameOn(GameState.betClosed){
-			address winner;
+		gameOn(GameState.betClosed){			
 			uint winnings = this.balance;
 			if(((variables[0] * block.number) + (variables[1] * block.timestamp))% 2 == 0){
 				parties[0].send(this.balance);
@@ -46,6 +47,11 @@
 				winner = parties[1];
 			}
 			GameResult(winner, winnings);
+		}
+
+		function setResult(string storageHash) public
+		gameOn(GameState.betClosed){
+			latestResultHash = storageHash;
 			coinFlip = GameState.betOpen;
 		}
 	}
