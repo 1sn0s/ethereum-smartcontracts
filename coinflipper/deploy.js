@@ -144,9 +144,11 @@ module.exports = {
 	},
 
 	//Flips the coin
-	flipCoin: function(contract){
-		contract.methods.flipCoin().send({from:web3.eth.defaultAccount})
-		.then(console.log);
+	flipCoin: async function(contract){
+		var res = await contract.methods.flipCoin().send({from:web3.eth.defaultAccount});
+		console.log("res", res);
+		let res1 = await res;
+		console.log("res1", res1);
 	},
 
 	checkResult: function(contract){
