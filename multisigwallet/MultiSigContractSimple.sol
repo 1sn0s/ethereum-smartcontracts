@@ -1,13 +1,13 @@
 pragma solidity ^0.4.19;
 /*
-Multi signature contract
+A simple Multi signature contract
 */
-contract MultiSigContract{
+contract MultiSigContractSimple{
 	uint public sigLimit;
 	mapping(address=>bool) private _isOwner;
 	address[] public ownersList;
 
-	function MultiSigContract(address[] ownersToSet, uint sigCount){
+	function MultiSigContractSimple(address[] ownersToSet, uint sigCount){
 		require(ownersToSet.length <= sigCount && sigCount != 0);
 		//The addresses should be sent in an increasing order
 		//This is to avoid the duplicate check
