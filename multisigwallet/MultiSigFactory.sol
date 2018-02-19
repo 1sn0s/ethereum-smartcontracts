@@ -18,7 +18,7 @@ contract MultiSigFactory{
 		bool executed;
 	}
 
-	enum ProposalPurpose { AddOwner, RemoveOwner, ReplaceOwner};
+	enum ProposalPurpose { AddOwner, RemoveOwner, ReplaceOwner}
 
 	struct Proposal {
 		address owner;
@@ -29,12 +29,12 @@ contract MultiSigFactory{
 	mapping (uint => Transaction) public transactions;
 	mapping (uint => Proposal) public proposals;
 
-	function initiateNewTransaction(address destination, uint value, bytes data) returns (int transactionId);
-	function acceptTransaction(uint transactionId);
-	function rejectTransaction(uint transactionId);
+	function initiateNewTransaction(address destination, uint value, bytes data) public returns (int transactionId);
+	function acceptTransaction(uint transactionId) public;
+	function rejectTransaction(uint transactionId) public;
 
-	function initiateProposal(address owner);
-	function acceptProposal(uint proposalId);
-	function rejectProposal(uint proposalId);
+	function initiateProposal(address owner) public;
+	function acceptProposal(uint proposalId) public;
+	function rejectProposal(uint proposalId) public;
 
 }
