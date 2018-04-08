@@ -8,7 +8,7 @@ pragma solidity ^0.4.20;
 contract SPChannel {
 	address public payer;
 	address public receiver;
-	uint256 public remainingTime;
+	uint256 public remainingDuration;
 
 	function SPChannel (address _receiver, uint256 duration)
 		public 
@@ -16,13 +16,13 @@ contract SPChannel {
 	{
 		payer = msg.sender;
 		receiver = _receiver;
-		remainingTime = duration;
+		remainingDuration = duration;
 	}
 
 	///public functions
 
 	//Close the payment channel
-	function close (uint256 amount,	bytes signature) 
+	function close(uint256 amount,	bytes signature) 
 		public
 		returns(bool res)
 	{		
@@ -30,14 +30,22 @@ contract SPChannel {
 		require(isValidSignature(amount, signature));
 
 		receiver.transfer(amount);
-		//Destruct
+		//Destruct the channel ? or switch off ?
 	}
 
 	//Extend the remaining time of the payment channel
-	function extend (uint256 timeRemaining) 
+	function extendRemainingDuration(uint256 additionalDuration) 
 		public
-		returns(bool res){
-		
+		returns(bool res)
+	{
+		require(msg.sender == payer);
+
+		remainingDuration += additionalDuration;
+		return true;
+	}
+
+	function reclaim() public {
+		require(msg.sender == payer);		
 	}
 
 	///Private functions
