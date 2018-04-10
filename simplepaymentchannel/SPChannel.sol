@@ -79,8 +79,9 @@ contract SPChannel {
 		//Note: signature message = amount + channel address
 		//Construct the message and get the public address
 		//Verify address
+		bytes memory prefix = "\x19Ethereum Signed Message:\n32";
 
-		bytes32 message = keccak256(amount, this);
+		bytes32 message = keccak256(prefix, keccak256(amount, this));
 		return getSigner(signature, message) == payer;
 	}
 
