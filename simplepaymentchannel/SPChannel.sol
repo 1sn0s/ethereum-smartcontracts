@@ -8,15 +8,15 @@ pragma solidity ^0.4.20;
 contract SPChannel {
 	address public payer;
 	address public receiver;
-	uint256 public remainingDuration;
+	uint256 public channelEndTime;
 
-	function SPChannel (address _receiver, uint256 duration)
+	function SPChannel (address _receiver, uint256 endTIme)
 		public 
 		payable 
 	{
 		payer = msg.sender;
 		receiver = _receiver;
-		remainingDuration = duration;
+		channelEndTime = now + endTime;
 	}
 
 	///public functions
@@ -34,13 +34,14 @@ contract SPChannel {
 	}
 
 	//Extend the remaining time of the payment channel
-	function extendRemainingDuration(uint256 additionalDuration) 
+	function extendChannelLife(uint256 endTIme) 
 		public
 		returns(bool res)
 	{
 		require(msg.sender == payer);
+		require(endTime > now);
 
-		remainingDuration += additionalDuration;
+		channelEndTime = endTIme;
 		return true;
 	}
 
