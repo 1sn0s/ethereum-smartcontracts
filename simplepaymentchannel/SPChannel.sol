@@ -9,6 +9,7 @@ contract SPChannel {
 	address public payer;
 	address public receiver;
 	uint256 public channelEndTime;
+	bool public isChannelClosed;
 
 	function SPChannel (address _receiver, uint256 endTIme)
 		public 
@@ -17,6 +18,7 @@ contract SPChannel {
 		payer = msg.sender;
 		receiver = _receiver;
 		channelEndTime = now + endTime;
+		isChannelClosed = false;
 	}
 
 	///public functions
@@ -25,12 +27,20 @@ contract SPChannel {
 	function close(uint256 amount,	bytes signature) 
 		public
 		returns(bool res)
-	{		
+	{
+		require(isChannelClosed == false);
 		require(msg.sender == receiver);
 		require(isValidSignature(amount, signature));
 
+		isChannelClosed = true;
 		receiver.transfer(amount);
-		//Destruct the channel ? or switch off ?
+		return true;
+		/*
+		Destruct the channel ? or switch off ? or keep the channel ?
+		destruct - Loose control of address
+		switch off - receiver need to pay for the gas?
+		keep channel - payer has control 
+		*/
 	}
 
 	//Extend the remaining time of the payment channel
@@ -50,10 +60,14 @@ contract SPChannel {
 		return(bool res)
 	{
 		require(msg.sender == payer);
-		require(now < channelEndTime);
+		require(now < channelEndTime || isChannelClosed == true);
 
 		payer.transfer(this.balance);
+		isChannelClosed = true;
 		return true;
+		/* 
+		Destruct contract here ?
+		*/
 	}
 
 	///Private functions
