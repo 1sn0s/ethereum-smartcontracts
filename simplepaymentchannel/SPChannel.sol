@@ -45,8 +45,15 @@ contract SPChannel {
 		return true;
 	}
 
-	function reclaim() public {
-		require(msg.sender == payer);		
+	function reclaimBalance() 
+		public
+		return(bool res)
+	{
+		require(msg.sender == payer);
+		require(now < channelEndTime);
+
+		payer.transfer(this.balance);
+		return true;
 	}
 
 	///Private functions
