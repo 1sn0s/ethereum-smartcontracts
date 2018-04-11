@@ -21,7 +21,7 @@ contract PaymentChannelA {
 		isChannelClosed = false;
 	}
 
-	//Close the payment channel
+	//Withdraw funds for receiver
 	function withdraw(uint256 amount, bytes signature) 
 		public
 		returns(bool res)
@@ -47,6 +47,7 @@ contract PaymentChannelA {
 		return true;
 	}
 
+	//For payer to reduce channel funds
 	function reduceChannelBalance(int256 amount) 
 		public
 		return(bool res)
@@ -59,6 +60,7 @@ contract PaymentChannelA {
 		return true;		
 	}
 
+	//For payer to increase the channel funds
 	function increaseChannelBalance(uint256 amount)
 		public
 		payable
