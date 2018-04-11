@@ -1,73 +1,72 @@
-pragma solidity ^0.4.20;
+pragma solidity ^0.4.21;
 
-/**
- * The SPChannel contract is a simplified one way 	payment channel between two parties
- * It will only persist across one set of payments
- * Only the second party can close the channel
- */
-contract SPChannel {
-	address public payer;
-	address public receiver;
-	uint256 public channelEndTime;
-	bool public isChannelClosed;
+/* One way payment channel 
+   Payer doesnot have to escrow the whole payment in the begining
+   No preset channel life
+   Receiver can verify payment from payer and escrow amount in the contract for unlimited time
+   Payer can withdraw amounts not escrowed by receiver
+*/
 
-	function SPChannel (address _receiver, uint256 endTIme)
-		public 
-		payable 
+contract PaymentChannelA {
+	address payer;
+	address receiver;
+	//int256 escrowed;
+	bool isChannelClosed;
+
+	function PaymentChannelA(address _receiver)
+		public
 	{
 		payer = msg.sender;
 		receiver = _receiver;
-		channelEndTime = now + endTime;
 		isChannelClosed = false;
 	}
 
-	///public functions
-
 	//Close the payment channel
-	function close(uint256 amount,	bytes signature) 
+	function withdraw(uint256 amount, bytes signature) 
+		public
+		returns(bool res)
+	{		
+		require(msg.sender == receiver);
+		require(amount <= this.balance);
+		require(isValidSignature(amount, signature));
+
+		//escrowed -= amount;
+		receiver.transfer(amount);
+		return true;
+	}
+
+	//Verify and escrow a payment received from payer without withdrawing
+	function verifyPayment(uint256 amount, bytes signature) 
 		public
 		returns(bool res)
 	{
 		require(isChannelClosed == false);
-		require(msg.sender == receiver);
+		require(msg.sender == reciver);
 		require(isValidSignature(amount, signature));
-
-		isChannelClosed = true;
-		receiver.transfer(amount);
-		return true;
-		/*
-		Destruct the channel ? or switch off ? or keep the channel ?
-		destruct - Loose control of address
-		switch off - receiver need to pay for the gas?
-		keep channel - payer has control 
-		*/
-	}
-
-	//Extend the remaining time of the payment channel
-	function extendChannelLife(uint256 endTIme) 
-		public
-		returns(bool res)
-	{
-		require(msg.sender == payer);
-		require(endTime > now);
-
-		channelEndTime = endTIme;
+		//Escrow it here
 		return true;
 	}
 
-	function reclaimBalance() 
+	function reduceChannelBalance(int256 amount) 
 		public
 		return(bool res)
 	{
 		require(msg.sender == payer);
-		require(now < channelEndTime || isChannelClosed == true);
+		require(amount <= this.balance);
 
-		payer.transfer(this.balance);
-		isChannelClosed = true;
+		payer.transfer(amount);
+		//isChannelClosed = true;
+		return true;		
+	}
+
+	function increaseChannelBalance(uint256 amount)
+		public
+		payable
+		return(bool res)
+	{
+		require(isChannelClosed == false);
+		require(msg.sender == payer);
 		return true;
-		/* 
-		Destruct contract here ?
-		*/
 	}
 
 	///Private functions
@@ -113,5 +112,4 @@ contract SPChannel {
 
 		return (v, r, s);
 	}
-	
 }
