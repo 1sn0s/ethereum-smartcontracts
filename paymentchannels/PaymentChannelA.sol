@@ -76,6 +76,13 @@ contract PaymentChannelA {
 		return true;
 	}
 
+	function openChannel() public return(bool res)
+	{
+		require(msg.sender == payer);
+		isChannelClosed = false;
+		return true;
+	}
+
 	///Private functions
 
 	function isValidSignature(uint256 amount, bytes signature) 
