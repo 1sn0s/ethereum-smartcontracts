@@ -3,14 +3,16 @@ pragma solidity ^0.4.21;
 /* One way payment channel 
    Payer doesnot have to escrow the whole payment in the begining
    No preset channel life
-   Receiver can verify payment from payer and escrow amount in the contract for unlimited time
+   Receiver can verify and escrow payment from payer
+   Once receiver starts a withdraw channel will be closed
+   Receiver can withdraw escrowed amounts even after channel closing
    Payer can withdraw amounts not escrowed by receiver
 */
 
 contract PaymentChannelA {
 	address payer;
 	address receiver;
-	//int256 escrowed;
+	int256 escrowed;
 	bool isChannelClosed;
 
 	function PaymentChannelA(address _receiver)
@@ -28,22 +30,26 @@ contract PaymentChannelA {
 	{		
 		require(msg.sender == receiver);
 		require(amount <= this.balance);
+		require(!isChannelClosed || (amount <= escrowed))
 		require(isValidSignature(amount, signature));
 
-		//escrowed -= amount;
+		isChannelClosed = true;
+		escrowed = (escrowed-amount) < 0 ? 0 : (escrowed-amount);
 		receiver.transfer(amount);
 		return true;
 	}
 
 	//Verify and escrow a payment received from payer without withdrawing
-	function verifyPayment(uint256 amount, bytes signature) 
+	function escrowPayment(uint256 amount, bytes signature) 
 		public
 		returns(bool res)
 	{
-		require(isChannelClosed == false);
+		require(!isChannelClosed);
 		require(msg.sender == reciver);
+		require(amount <= this.balance);
 		require(isValidSignature(amount, signature));
 		//Escrow it here
+		escrowed = amount;
 		return true;
 	}
 
@@ -53,10 +59,9 @@ contract PaymentChannelA {
 		return(bool res)
 	{
 		require(msg.sender == payer);
-		require(amount <= this.balance);
+		require(amount <= (this.balance - escrowed));
 
 		payer.transfer(amount);
-		//isChannelClosed = true;
 		return true;		
 	}
 
