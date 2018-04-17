@@ -9,6 +9,8 @@ pragma solidity ^0.4.21;
    Payer can withdraw amounts not escrowed by receiver
 */
 
+import "../math/SafeMath.sol"
+
 contract PaymentChannelA {
 	address payer;
 	address receiver;
@@ -34,7 +36,7 @@ contract PaymentChannelA {
 		require(isValidSignature(amount, signature));
 
 		isChannelClosed = true;
-		escrowed = (escrowed-amount) < 0 ? 0 : (escrowed-amount);
+		escrowed = escrowed.sub(amount) < 0 ? 0 : escrowed.sub(amount);
 		receiver.transfer(amount);
 		return true;
 	}
