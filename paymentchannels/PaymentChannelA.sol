@@ -9,12 +9,12 @@ pragma solidity ^0.4.21;
    Payer can withdraw amounts not escrowed by receiver
 */
 
-import "../math/SafeMath.sol"
+import "../math/SafeMath.sol";
 
 contract PaymentChannelA {
 	address payer;
 	address receiver;
-	int256 escrowed;
+	uint256 escrowed;
 	bool isChannelClosed;
 
 	function PaymentChannelA(address _receiver)
@@ -32,7 +32,7 @@ contract PaymentChannelA {
 	{		
 		require(msg.sender == receiver);
 		require(amount <= this.balance);
-		require(!isChannelClosed || (amount <= escrowed))
+		require(!isChannelClosed || (amount <= escrowed));
 		require(isValidSignature(amount, signature));
 
 		isChannelClosed = true;
@@ -47,7 +47,7 @@ contract PaymentChannelA {
 		returns(bool res)
 	{
 		require(!isChannelClosed);
-		require(msg.sender == reciver);
+		require(msg.sender == receiver);
 		require(amount <= this.balance);
 		require(isValidSignature(amount, signature));
 		//Escrow it here
@@ -58,7 +58,7 @@ contract PaymentChannelA {
 	//For payer to reduce channel funds
 	function reduceChannelBalance(int256 amount) 
 		public
-		return(bool res)
+		returns(bool res)
 	{
 		require(msg.sender == payer);
 		require(amount <= (this.balance - escrowed));
@@ -71,14 +71,14 @@ contract PaymentChannelA {
 	function increaseChannelBalance(uint256 amount)
 		public
 		payable
-		return(bool res)
+		returns(bool res)
 	{
 		require(isChannelClosed == false);
 		require(msg.sender == payer);
 		return true;
 	}
 
-	function openChannel() public return(bool res)
+	function openChannel() public returns(bool res)
 	{
 		require(msg.sender == payer);
 		isChannelClosed = false;
